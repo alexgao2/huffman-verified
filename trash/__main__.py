@@ -4,6 +4,6 @@ from typing import Callable, Any, TypeVar, NamedTuple
 from math import floor
 from itertools import count
 
-import module_ as module_
+import trash.module_ as module_
 import _dafny as _dafny
 

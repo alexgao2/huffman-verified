@@ -1,9 +1,7 @@
 module Huffman {
 
-    // ---------- Option type ----------
     datatype Option<T> = None | Some(value: T)
 
-    // ---------- Huffman tree ----------
     datatype HTree<Sym(==)> =
       | Leaf(sym: Sym, w: nat)
       | Node(w: nat, left: HTree<Sym>, right: HTree<Sym>)
@@ -35,7 +33,6 @@ module Huffman {
         Leaves(l) !! Leaves(r)
     }
 
-    // ---------- Map helpers ----------
     function PrefixMap<Sym(==)>(b: bool, m: map<Sym, seq<bool>>): map<Sym, seq<bool>>
     {
       map s | s in m.Keys :: s := [b] + m[s]
@@ -141,7 +138,6 @@ module Huffman {
         }
     }
 
-    // ----- Prefix‑free property (new) -----
     predicate IsPrefix(a: seq<bool>, b: seq<bool>) {
       |a| <= |b| && forall i :: 0 <= i < |a| ==> a[i] == b[i]
     }
@@ -315,7 +311,6 @@ module Huffman {
         }
     }
 
-    // ---------- Encoding ----------
     function EncodeWithCodes<Sym(==)>(code: map<Sym, seq<bool>>, msg: seq<Sym>): seq<bool>
       requires forall s :: s in msg ==> s in code.Keys
       decreases |msg|
@@ -346,7 +341,6 @@ module Huffman {
       }
     }
 
-    // ---------- Decoding one symbol ----------
     lemma SeqAssocBool<Sym>(b: bool, x: seq<bool>, y: seq<bool>)
       ensures ([b] + x) + y == [b] + (x + y)
     {
@@ -424,7 +418,6 @@ module Huffman {
         }
     }
 
-    // ---------- Decoding full stream (total via fuel) ----------
     function DecodeOptionFuel<Sym(==)>(t: HTree<Sym>, bits: seq<bool>, fuel: nat): Option<seq<Sym>>
       requires ValidTree(t) && NonTrivialTree(t)
       decreases fuel
@@ -446,7 +439,6 @@ module Huffman {
       DecodeOptionFuel(t, bits, |bits|)
     }
 
-    // Fuel-parameterized round trip (easier to prove)
     lemma RoundTripFuel<Sym>(t: HTree<Sym>, msg: seq<Sym>, fuel: nat)
       requires ValidTree(t) && NonTrivialTree(t)
       requires forall s :: s in msg ==> s in Codes(t).Keys
@@ -499,7 +491,6 @@ module Huffman {
     RoundTripFuel(t, msg, |bits|);
   }
 
-    // ---------- Builder inputs ----------
     ghost function Alphabet<Sym>(freq: seq<(Sym, nat)>): set<Sym>
       decreases |freq|
     {
@@ -519,7 +510,6 @@ module Huffman {
       forall i :: 0 <= i < |freq| ==> freq[i].1 > 0
     }
 
-    // ---------- Helper lemmas for Alphabet ----------
     lemma InAlphabetImpliesExists<Sym>(freq: seq<(Sym, nat)>, s: Sym)
       requires s in Alphabet(freq)
       ensures exists i :: 0 <= i < |freq| && freq[i].0 == s
@@ -598,7 +588,6 @@ module Huffman {
       }
     }
 
-    // ---------- Priority queue invariant (seq sorted by weight) ----------
     ghost predicate SortedByWeight<Sym>(q: seq<HTree<Sym>>)
     {
       forall i :: 0 <= i < |q| - 1 ==> Weight(q[i]) <= Weight(q[i + 1])
@@ -627,7 +616,6 @@ module Huffman {
       forall i :: 0 <= i < |q| ==> ValidTree(q[i])
     }
 
-    // Insert a tree into a sorted queue by weight.
     function InsertSorted<Sym(==)>(q: seq<HTree<Sym>>, t: HTree<Sym>): seq<HTree<Sym>>
       requires SortedByWeight(q)
       decreases |q|
@@ -772,7 +760,6 @@ module Huffman {
       }
     }
 
-    // ---------- BuildHuffman ----------
     method BuildHuffman<Sym(==)>(freq: seq<(Sym, nat)>) returns (t: HTree<Sym>)
       requires ValidFreq(freq)
       ensures ValidTree(t)
