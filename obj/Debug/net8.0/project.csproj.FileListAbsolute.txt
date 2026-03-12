@@ -1,0 +1,15 @@
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/project.GeneratedMSBuildEditorConfig.editorconfig
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/project.AssemblyInfoInputs.cache
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/project.AssemblyInfo.cs
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/project.csproj.CoreCompileInputs.cache
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/project.sourcelink.json
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/project.dll
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/refint/project.dll
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/project.pdb
+/home/guransh/Desktop/ECS/huffman-verified/project.deps.json
+/home/guransh/Desktop/ECS/huffman-verified/project.dll
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/ref/project.dll
+/home/guransh/Desktop/ECS/huffman-verified/project.pdb
+/home/guransh/Desktop/ECS/huffman-verified/project
+/home/guransh/Desktop/ECS/huffman-verified/obj/Debug/net8.0/project.genruntimeconfig.cache
+/home/guransh/Desktop/ECS/huffman-verified/project.runtimeconfig.json

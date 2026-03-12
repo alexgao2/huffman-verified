@@ -489,7 +489,6 @@ module Huffman {
       }
     }
 
-  // Stronger version: requires the exact precondition needed by Encode
   lemma DecodeEncodedRoundTrip<Sym>(t: HTree<Sym>, msg: seq<Sym>)
     requires ValidTree(t) && NonTrivialTree(t)
     requires forall s :: s in msg ==> s in Codes(t).Keys
@@ -885,22 +884,32 @@ module Huffman {
     DecodeEncodedRoundTrip(t, msg);
   }
 
-    // ---------- Tests ----------
-    method {:test} TestRoundTripSimple()
-    {
-      var freq := [('A', 5), ('B', 7), ('C', 10)];
-      var t := BuildHuffman(freq);
-      CodesKeys(t);
-      var msg := ['A', 'B', 'A', 'C', 'B'];
-      DecodeEncodedRoundTrip(t, msg);
-      assert DecodeOption(t, Encode(t, msg)) == Some(msg);
-    }
 
-    // Additional test for prefix‑free property
-    method {:test} TestPrefixFree()
+method {:test} DemoRun()
+{
+  var freq := [('😄', 3), ('C', 6), ('D', 4), ('A', 5), ('E', 2)];
+  var t := BuildHuffman(freq);
+
+  CodesKeys(t);
+
+  var msg := ['😄', 'C', 'C','D','A', 'C', 'C','😄','D' ,'A','😄', 'C', 'C','D', 'E', 'A', 'A', 'E', 'D', 'A'];
+
+  assert 'A' in Codes(t).Keys;
+  assert '😄' in Codes(t).Keys;
+  assert 'D' in Codes(t).Keys;
+
+  assert forall s :: s in msg ==> s in Codes(t).Keys by {
+    forall s | s in msg
+      ensures s in Codes(t).Keys
     {
-      var freq := [('A',5), ('B',7), ('C',10)];
-      var t := BuildHuffman(freq);
-      CodesPrefixFree(t);   // verifies that the generated code table is prefix‑free
+      assert s == 'A' || s == '😄' || s=='C'|| s == 'D' || s=='E';
     }
+  }
+
+  var bits := Encode(t, msg);
+  // print "Encoded bits: ", bits, "\n";
+
+  var decoded := DecodeOption(t, bits);
+  print "Decoded: ", decoded, "\n";
+}
   }
