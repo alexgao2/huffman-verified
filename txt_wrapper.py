@@ -15,10 +15,8 @@ sys.setrecursionlimit(300000)
 
 TEXT_FILE = "input.txt"
 
-
 def to_dafny_msg(text):
     return _dafny.SeqWithoutIsStrInference([_dafny.CodePoint(c) for c in text])
-
 
 def draw_tree_png(t, filename_base="huffman_tree"):
     dot = Digraph("HuffmanTree", format="png")
@@ -58,13 +56,11 @@ def draw_tree_png(t, filename_base="huffman_tree"):
     outpath = dot.render(filename_base, cleanup=True)
     return outpath
 
-
 def try_open_file(path):
     try:
         subprocess.run(["xdg-open", path], check=False)
     except Exception:
         pass
-
 
 def extract_codes(t):
     codes = {}
@@ -79,7 +75,6 @@ def extract_codes(t):
     walk(t, [])
     return codes
 
-
 def printable_symbol(s):
     if s == "\n":
         return "\\n"
@@ -90,7 +85,6 @@ def printable_symbol(s):
     if s == " ":
         return "' '"
     return repr(s)
-
 
 def main():
     if not os.path.exists(TEXT_FILE):
@@ -176,7 +170,6 @@ def main():
         print(f"Decoded text saved to: {decoded_file}")
     else:
         print("\nDecode failed on encoded bits (should not happen).")
-
 
 if __name__ == "__main__":
     main()

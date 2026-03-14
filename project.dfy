@@ -562,10 +562,7 @@ lemma MsgAlphabetPrefix<Sym>(msg: seq<Sym>, i: nat)
     assert msg[..i+1] == [msg[0]] + msg[1..i+1];
     assert msg[..i] == [msg[0]] + msg[1..i];
 
-    // Apply induction on the tail msg[1..]
     MsgAlphabetPrefix(msg[1..], i - 1);
-
-    // Help Dafny identify the slices exactly
     assert (msg[1..])[..i] == msg[1..i+1];
     assert (msg[1..])[..i-1+1] == msg[1..i+1];
     assert (msg[1..])[..i-1] == msg[1..i];
@@ -685,7 +682,7 @@ lemma DistinctSeqNotInPrefix<Sym>(xs: seq<Sym>, i: nat)
   }
 }
 
-    lemma CountOfPositive<Sym>(msg: seq<Sym>, x: Sym)  // removed (==) because it's ghost
+    lemma CountOfPositive<Sym>(msg: seq<Sym>, x: Sym) 
       requires x in MsgAlphabet(msg)
       ensures CountOf(msg, x) > 0
       decreases |msg|
