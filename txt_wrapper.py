@@ -18,6 +18,7 @@ TEXT_FILE = "input.txt"
 def to_dafny_msg(text):
     return _dafny.SeqWithoutIsStrInference([_dafny.CodePoint(c) for c in text])
 
+
 def draw_tree_png(t, filename_base="huffman_tree"):
     dot = Digraph("HuffmanTree", format="png")
     dot.attr(rankdir="TB", bgcolor="white")
@@ -25,14 +26,22 @@ def draw_tree_png(t, filename_base="huffman_tree"):
     dot.attr("edge", fontname="Helvetica", penwidth="1.5")
     nid = count(0)
 
+    def sym_label(sym_obj):
+        if hasattr(sym_obj, 'is_Real'):
+            if sym_obj.is_Real:
+                return repr(str(sym_obj.s))
+            else:
+                return "\u2205"
+        return repr(str(sym_obj))
+
     def add_node(tree_obj):
         my_id = f"n{next(nid)}"
         if tree_obj.is_Leaf:
-            sym = repr(str(tree_obj.sym))
+            label = sym_label(tree_obj.sym)
             w = tree_obj.w
             dot.node(
                 my_id,
-                f"{sym}\\nw={w}",
+                f"{label}\\nw={w}",
                 shape="box",
                 fillcolor="lightyellow",
                 color="black"
@@ -56,24 +65,35 @@ def draw_tree_png(t, filename_base="huffman_tree"):
     outpath = dot.render(filename_base, cleanup=True)
     return outpath
 
+
 def try_open_file(path):
     try:
         subprocess.run(["xdg-open", path], check=False)
     except Exception:
         pass
 
+
 def extract_codes(t):
     codes = {}
 
+    def sym_label(sym_obj):
+        if hasattr(sym_obj, 'is_Real'):
+            if sym_obj.is_Real:
+                return str(sym_obj.s)
+            else:
+                return "<SENTINEL>"
+        return str(sym_obj)
+
     def walk(node, path_bits):
         if node.is_Leaf:
-            codes[str(node.sym)] = path_bits[:]
+            codes[sym_label(node.sym)] = path_bits[:]
         else:
             walk(node.left, path_bits + [0])
             walk(node.right, path_bits + [1])
 
     walk(t, [])
     return codes
+
 
 def printable_symbol(s):
     if s == "\n":
@@ -85,6 +105,7 @@ def printable_symbol(s):
     if s == " ":
         return "' '"
     return repr(s)
+
 
 def main():
     if not os.path.exists(TEXT_FILE):
@@ -98,21 +119,21 @@ def main():
         print("Text file is empty.")
         return
 
-    if len(set(text)) < 2:
-        print("Need at least 2 distinct characters for the current Dafny Huffman implementation.")
-        return
-
     print(f"\nReading text from: {TEXT_FILE}")
     print(f"Character count: {len(text)}")
+    print(f"Distinct symbols: {len(set(text))}")
+
+    # Frequency table for display (computed in Python)
+    from collections import Counter
+    freq_counter = Counter(text)
+    print("\nFrequency table:")
+    for ch, cnt in sorted(freq_counter.items(), key=lambda x: -x[1]):
+        print(f"  {printable_symbol(ch):>6s} : {cnt}")
 
     msg = to_dafny_msg(text)
 
-    freq_list = Huffman.default__.BuildFreqFromMsg(msg)
-    print("\nFrequency table (computed by Dafny):")
-    for (k, v) in freq_list:
-        print(f"{printable_symbol(str(k))} : {v}")
-
-    t = Huffman.default__.BuildHuffmanFromMsg(msg)
+    # Build tree via Safe API
+    t = Huffman.default__.SafeBuildHuffmanFromMsg(msg)
 
     png_path = draw_tree_png(t, "text_huffman_tree")
     print(f"\nTree image saved to: {png_path}")
@@ -120,56 +141,62 @@ def main():
     codes = extract_codes(t)
     print("\nCode table:")
     for s in sorted(codes.keys()):
-        print(f"{printable_symbol(s)} : {''.join(map(str, codes[s]))}")
+        print(f"  {printable_symbol(s):>6s} : {''.join(map(str, codes[s]))}")
 
     ok = Huffman.default__.CheckPrefixFree(t)
     print("\nPrefix-free (verified by Dafny):", ok)
 
-    bits = Huffman.default__.Encode(t, msg)
+    # Encode via Safe API
+    bits = Huffman.default__.SafeEncode(t, msg)
     bits_py = [1 if b else 0 for b in list(bits)]
-
-    print("\nHuffman encoded bits length:", len(bits_py))
 
     preview_len = 300
     bit_string = ''.join(map(str, bits_py))
-    if len(bit_string) <= preview_len:
-        print("Huffman encoded bits:", bit_string)
-    else:
-        print("Huffman encoded bits preview:", bit_string[:preview_len] + "...")
 
-    original_bits = len(text.encode("utf-8")) * 8
+    # --- Compression summary ---
     original_bytes = len(text.encode("utf-8"))
+    original_bits = original_bytes * 8
     compressed_bits = len(bits_py)
     compressed_bytes_est = (compressed_bits + 7) // 8
 
-    print("\nOriginal text size:")
-    print("Bytes (UTF-8):", original_bytes)
-    print("Bits:", original_bits)
-
-    print("\nCompressed Huffman size:")
-    print("Bits:", compressed_bits)
+    print("\nCompression complete")
+    print("Input file:", TEXT_FILE)
+    print("Original size (bytes):", original_bytes)
+    print("Original size (bits):", original_bits)
+    print("Compressed Huffman bits:", compressed_bits)
     print("Approx packed bytes:", compressed_bytes_est)
 
-    saved_bits = original_bits - compressed_bits
-    saved_bytes = original_bytes - compressed_bytes_est
+    if compressed_bytes_est < original_bytes:
+        saved = original_bytes - compressed_bytes_est
+        print("Saved bytes:", saved)
+        print("Compression ratio:", round(compressed_bits / original_bits, 4))
+    else:
+        extra = compressed_bytes_est - original_bytes
+        print("Compressed is larger by bytes:", extra)
+        print("Ratio:", round(compressed_bits / original_bits, 4))
 
-    print("\nSize difference:")
-    print("Bits saved:", saved_bits)
-    print("Approx bytes saved:", saved_bytes)
-    print("Compression ratio:", round(compressed_bits / original_bits, 4))
+    if len(bit_string) <= preview_len:
+        print("\nHuffman encoded bits:", bit_string)
+    else:
+        print(f"\nHuffman encoded bits (first {preview_len}):", bit_string[:preview_len] + "...")
 
-    decoded = Huffman.default__.DecodeOption(t, bits)
+    # --- Decode via Safe API ---
+    decoded = Huffman.default__.SafeDecodeOption(t, bits)
     if decoded.is_Some:
-        out_seq = decoded.value
-        out = ''.join(str(cp) for cp in out_seq)
-        print("\nRound-trip decode correct?:", out == text)
+        out = ''.join(str(cp) for cp in decoded.value)
 
         decoded_file = "decoded_output.txt"
         with open(decoded_file, "w", encoding="utf-8") as f:
             f.write(out)
-        print(f"Decoded text saved to: {decoded_file}")
+
+        print("\nDecompression complete")
+        print("Decoded text saved to:", decoded_file)
+        print("Decoded size (chars):", len(out))
+        print("\nPrefix-free (verified by Dafny):", ok)
+        print("Round-trip decode correct?:", out == text)
     else:
         print("\nDecode failed on encoded bits (should not happen).")
+
 
 if __name__ == "__main__":
     main()

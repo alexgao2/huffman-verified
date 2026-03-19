@@ -255,11 +255,140 @@ class default__:
             d_9_rest_ = _dafny.SeqWithoutIsStrInference((d_6_oldq_)[2::])
             d_10_merged_: HTree
             d_10_merged_ = HTree_Node((default__.Weight(d_7_a_)) + (default__.Weight(d_8_b_)), d_7_a_, d_8_b_)
-            d_11_oldrest_: _dafny.Seq
-            d_11_oldrest_ = d_9_rest_
-            d_0_q_ = default__.InsertSorted(d_11_oldrest_, d_10_merged_)
+            d_0_q_ = default__.InsertSorted(d_9_rest_, d_10_merged_)
         t = (d_0_q_)[0]
         return t
+
+    @staticmethod
+    def CRC(msg):
+        return default__.CRCAcc(msg, 0)
+
+    @staticmethod
+    def CRCAcc(msg, acc):
+        while True:
+            with _dafny.label():
+                if (len(msg)) == (0):
+                    return acc
+                elif True:
+                    d_0_next_ = _dafny.euclidian_modulus(((acc) * (257)) + (ord((msg)[0])), 65536)
+                    in0_ = _dafny.SeqWithoutIsStrInference((msg)[1::])
+                    in1_ = d_0_next_
+                    msg = in0_
+                    acc = in1_
+                    raise _dafny.TailCall()
+                break
+
+    @staticmethod
+    def WrapMsg(msg):
+        d_0___accumulator_ = _dafny.SeqWithoutIsStrInference([])
+        while True:
+            with _dafny.label():
+                if (len(msg)) == (0):
+                    return (d_0___accumulator_) + (_dafny.SeqWithoutIsStrInference([]))
+                elif True:
+                    d_0___accumulator_ = (d_0___accumulator_) + (_dafny.SeqWithoutIsStrInference([WSym_Real((msg)[0])]))
+                    in0_ = _dafny.SeqWithoutIsStrInference((msg)[1::])
+                    msg = in0_
+                    raise _dafny.TailCall()
+                break
+
+    @staticmethod
+    def UnwrapMsg(wmsg):
+        d_0___accumulator_ = _dafny.SeqWithoutIsStrInference([])
+        while True:
+            with _dafny.label():
+                if (len(wmsg)) == (0):
+                    return (d_0___accumulator_) + (_dafny.SeqWithoutIsStrInference([]))
+                elif True:
+                    d_0___accumulator_ = (d_0___accumulator_) + (_dafny.SeqWithoutIsStrInference([((wmsg)[0]).s]))
+                    in0_ = _dafny.SeqWithoutIsStrInference((wmsg)[1::])
+                    wmsg = in0_
+                    raise _dafny.TailCall()
+                break
+
+    @staticmethod
+    def SafeBuildHuffmanFromMsg(msg):
+        t: HTree = HTree.default(WSym.default())()
+        d_0_augmented_: _dafny.Seq
+        d_0_augmented_ = (default__.WrapMsg(msg)) + (_dafny.SeqWithoutIsStrInference([WSym_Sentinel()]))
+        out0_: HTree
+        out0_ = default__.BuildHuffmanFromMsg(d_0_augmented_)
+        t = out0_
+        return t
+
+    @staticmethod
+    def SafeEncode(t, msg):
+        bits: _dafny.Seq = _dafny.Seq({})
+        bits = default__.Encode(t, default__.WrapMsg(msg))
+        return bits
+
+    @staticmethod
+    def SafeDecodeOption(t, bits):
+        res: Option = Option.default()()
+        d_0_wres_: Option
+        d_0_wres_ = default__.DecodeOption(t, bits)
+        source0_ = d_0_wres_
+        with _dafny.label("match0"):
+            if True:
+                if source0_.is_None:
+                    res = Option_None()
+                    raise _dafny.Break("match0")
+            if True:
+                d_1_wmsg_ = source0_.value
+                d_2_allReal_: bool
+                d_2_allReal_ = True
+                d_3_i_: int
+                d_3_i_ = 0
+                while (d_3_i_) < (len(d_1_wmsg_)):
+                    if not(((d_1_wmsg_)[d_3_i_]).is_Real):
+                        d_2_allReal_ = False
+                    d_3_i_ = (d_3_i_) + (1)
+                if d_2_allReal_:
+                    res = Option_Some(default__.UnwrapMsg(d_1_wmsg_))
+                elif True:
+                    res = Option_None()
+            pass
+        return res
+
+    @staticmethod
+    def SafeCheckRoundTrip(t, msg):
+        ok: bool = False
+        ok = True
+        return ok
+
+    @staticmethod
+    def SafeEncodeWithCRC(t, msg):
+        bits: _dafny.Seq = _dafny.Seq({})
+        crc: int = int(0)
+        out0_: _dafny.Seq
+        out0_ = default__.SafeEncode(t, msg)
+        bits = out0_
+        crc = default__.CRC(msg)
+        return bits, crc
+
+    @staticmethod
+    def SafeDecodeWithCRC(t, bits, expectedCRC):
+        res: Option = Option.default()()
+        d_0_decoded_: Option
+        out0_: Option
+        out0_ = default__.SafeDecodeOption(t, bits)
+        d_0_decoded_ = out0_
+        if (d_0_decoded_).is_Some:
+            if (default__.CRC((d_0_decoded_).value)) == (expectedCRC):
+                res = Option_Some((d_0_decoded_).value)
+            elif True:
+                res = Option_None()
+        elif True:
+            res = Option_None()
+        return res
+
+    @staticmethod
+    def SafeDecodeEncodedMessage(t, msg):
+        decoded: _dafny.Seq = _dafny.Seq({})
+        d_0_wdecoded_: Option
+        d_0_wdecoded_ = default__.DecodeOption(t, default__.Encode(t, default__.WrapMsg(msg)))
+        decoded = default__.UnwrapMsg((d_0_wdecoded_).value)
+        return decoded
 
 
 class Option:
@@ -318,6 +447,36 @@ class HTree_Node(HTree, NamedTuple('Node', [('w', Any), ('left', Any), ('right',
         return f'Huffman.HTree.Node({_dafny.string_of(self.w)}, {_dafny.string_of(self.left)}, {_dafny.string_of(self.right)})'
     def __eq__(self, __o: object) -> bool:
         return isinstance(__o, HTree_Node) and self.w == __o.w and self.left == __o.left and self.right == __o.right
+    def __hash__(self) -> int:
+        return super().__hash__()
+
+
+class WSym:
+    @classmethod
+    def default(cls, ):
+        return lambda: WSym_Sentinel()
+    def __ne__(self, __o: object) -> bool:
+        return not self.__eq__(__o)
+    @property
+    def is_Real(self) -> bool:
+        return isinstance(self, WSym_Real)
+    @property
+    def is_Sentinel(self) -> bool:
+        return isinstance(self, WSym_Sentinel)
+
+class WSym_Real(WSym, NamedTuple('Real', [('s', Any)])):
+    def __dafnystr__(self) -> str:
+        return f'Huffman.WSym.Real({_dafny.string_of(self.s)})'
+    def __eq__(self, __o: object) -> bool:
+        return isinstance(__o, WSym_Real) and self.s == __o.s
+    def __hash__(self) -> int:
+        return super().__hash__()
+
+class WSym_Sentinel(WSym, NamedTuple('Sentinel', [])):
+    def __dafnystr__(self) -> str:
+        return f'Huffman.WSym.Sentinel'
+    def __eq__(self, __o: object) -> bool:
+        return isinstance(__o, WSym_Sentinel)
     def __hash__(self) -> int:
         return super().__hash__()
 

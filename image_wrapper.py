@@ -128,7 +128,6 @@ def compress_bmp(input_bmp: str, output_huff: str):
     print("\nCompression complete")
     print("Input BMP:", input_bmp)
     print("Compressed file:", output_huff)
-    print("Prefix-free (verified by Dafny):", ok)
     print("Original size (bytes):", original_size)
     print("Compressed size (bytes):", compressed_size)
     print("Original size (bits):", original_size * 8)
@@ -143,11 +142,7 @@ def compress_bmp(input_bmp: str, output_huff: str):
         print("Compressed file is larger by bytes:", extra)
         print("Ratio:", round(compressed_size / original_size, 4))
 
-    return {
-        "freq_list": freq_list,
-        "tree": t,
-        "valid_bit_count": valid_bit_count,
-    }
+    return ok
 
 def decompress_bmp(input_huff: str, output_bmp: str):
     original_len, valid_bit_count, freq_list, packed_bits = read_compressed_file(input_huff)
@@ -181,7 +176,7 @@ def compare_files(path1: str, path2: str):
         b2 = f2.read()
 
     same = b1 == b2
-    print("\nRound-trip byte equality:", same)
+    print("Round-trip byte equality:", same)
     return same
 
 def main():
@@ -198,8 +193,9 @@ def main():
     compressed_path = str(bmp.with_suffix(".huffbmp"))
     recovered_path = str(bmp.with_name(bmp.stem + "_recovered.bmp"))
 
-    compress_bmp(str(bmp), compressed_path)
+    ok = compress_bmp(str(bmp), compressed_path)
     decompress_bmp(compressed_path, recovered_path)
+    print("\nPrefix-free (verified by Dafny):", ok)
     compare_files(str(bmp), recovered_path)
 
 if __name__ == "__main__":
